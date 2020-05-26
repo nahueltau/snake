@@ -18,42 +18,53 @@ var ctx = canvas.getContext("2d");
 ctx.lineWidth = "0";
 //GENERAL SETUP
 var getCenter = function (startPos) {
-    return canvasUnit * startPos + canvasUnit / 2;
+    return canvasUnit * Math.floor(startPos) + canvasUnit / 2;
 };
 var collisionCheck = function () {
+    //Snake with bait
     if (getCenter(snakeSegments[0].x) === getCenter(baitPos.x) && getCenter(snakeSegments[0].y) === getCenter(baitPos.y)) {
-        baitPos = newBait();
+        getNewBait();
         hasAte = true;
+        if (counter) {
+            counter.innerHTML = ((snakeSegments.length - 2) * 10).toString();
+        }
+    }
+    //Snake with itself
+    for (var segment = 1; segment < snakeSegments.length; segment++) {
+        if (getCenter(snakeSegments[segment].y) === getCenter(snakeSegments[0].y)) {
+            if (getCenter(snakeSegments[segment].x) === getCenter(snakeSegments[0].x)) {
+                clearInterval(animationInterval);
+                window.removeEventListener("focus", windowFocusEvent);
+            }
+        }
     }
 };
-//BAIT SETUP
-var newBait = function () {
-    return {
-        x: Math.floor(Math.random() * canvasWidth / canvasUnit),
-        y: Math.floor(Math.random() * canvasHeight / canvasUnit)
-    };
-};
-var baitPos = newBait();
 //SNAKE SETUP
-var startPosX = 0;
-var startPosY = 0;
-var snakeSegments = [{ x: startPosX, y: startPosY }];
+var startPosX;
+var startPosY;
+var snakeSegments;
+var newSnake = function () {
+    startPosX = Math.floor(Math.random() * canvasWidth / canvasUnit / 2 + canvasWidth / canvasUnit / 4);
+    startPosY = Math.floor(Math.random() * canvasHeight / canvasUnit / 2 + canvasHeight / canvasUnit / 4);
+    snakeSegments = [{ x: startPosX + 2, y: startPosY }, { x: startPosX + 1, y: startPosY }, { x: startPosX, y: startPosY }];
+};
+newSnake();
 var hasAte = false;
 //Movement
 var currentMovementDirection = "ArrowRight";
 var movement = function () {
     switch (currentMovementDirection) {
         case "ArrowRight":
-            startPosX++;
+            startPosX += 1;
             break;
         case "ArrowLeft":
-            startPosX--;
+            startPosX -= 1;
             break;
         case "ArrowDown":
-            startPosY++;
+            startPosY += 1;
             break;
         case "ArrowUp":
-            startPosY--;
+            startPosY -= 1;
             break;
     }
 };
@@ -63,51 +74,96 @@ var isOutOfBounds = function (outOfBounds) {
             startPosX = canvasWidth / canvasUnit;
         }
         else if (getCenter(startPosX) > canvasWidth) {
-            startPosX = -1;
+            startPosX = 0;
         }
         if (getCenter(startPosY) < 0) {
             startPosY = canvasHeight / canvasUnit;
         }
         else if (getCenter(startPosY) > canvasHeight) {
-            startPosY = -1;
+            startPosY = 0;
         }
     }
 };
+//BAIT SETUP
+var newBait = function () {
+    return {
+        x: Math.floor(Math.random() * canvasWidth / canvasUnit),
+        y: Math.floor(Math.random() * canvasHeight / canvasUnit)
+    };
+};
+var getNewBait = function () {
+    baitPos = newBait();
+    var isBaitSuperposed = true;
+    while (isBaitSuperposed) {
+        for (var segment = 0; segment < snakeSegments.length; segment++) {
+            if (getCenter(snakeSegments[segment].x) === getCenter(baitPos.x) && getCenter(snakeSegments[segment].y) === getCenter(baitPos.y)) {
+                baitPos = newBait();
+                isBaitSuperposed = true;
+                break;
+            }
+            else {
+                isBaitSuperposed = false;
+            }
+        }
+    }
+};
+var baitPos;
+getNewBait();
+//COUNTER SETUP
+var counter = document.querySelector(".counter");
 //KEYBOARD EVENTS
 var handleInput = function (event) {
-    currentMovementDirection = event.key;
+    if (event.key === "ArrowUp" && currentMovementDirection !== "ArrowDown"
+        || event.key === "ArrowDown" && currentMovementDirection !== "ArrowUp"
+        || event.key === "ArrowLeft" && currentMovementDirection !== "ArrowRight"
+        || event.key === "ArrowRight" && currentMovementDirection !== "ArrowLeft") {
+        currentMovementDirection = event.key;
+    }
 };
 window.addEventListener("keydown", handleInput);
 //ANIMATION SETUP
-var animation = function () {
+var drawingElements = function () {
     //Background draw
-    ctx.beginPath();
     ctx.fillStyle = darkStyle;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    ctx.stroke();
     //Bait
-    ctx.beginPath();
     ctx.fillStyle = mainColorStyle;
     ctx.fillRect(getCenter(baitPos.x) - canvasUnit / 2, getCenter(baitPos.y) - canvasUnit / 2, canvasUnit, canvasUnit);
-    ctx.stroke();
     //Snake length
-    collisionCheck();
-    snakeSegments.unshift({ x: startPosX, y: startPosY });
     if (!hasAte) {
         snakeSegments.pop();
     }
+    snakeSegments.unshift({ x: startPosX, y: startPosY });
     hasAte = false;
     //Snake draw
     snakeSegments.forEach(function (position) {
-        ctx.beginPath();
         ctx.fillStyle = lightStyle;
         ctx.fillRect(getCenter(position.x) - canvasUnit / 2, getCenter(position.y) - canvasUnit / 2, canvasUnit, canvasUnit);
-        ctx.stroke();
     });
     //Snake movement and out of bounds check
+    movement(currentMovementDirection);
+    collisionCheck();
     var outOfBounds = getCenter(startPosX) < 0 || getCenter(startPosX) > canvasWidth || getCenter(startPosY) < 0 || getCenter(startPosY) > canvasHeight;
     isOutOfBounds(outOfBounds);
-    movement(currentMovementDirection);
 };
 //START ANIMATION
-setInterval(animation, 200);
+var frameRate = 100;
+var animationInterval;
+var windowFocusEvent = function () {
+    clearInterval(animationInterval);
+    animationInterval = setInterval(drawingElements, frameRate);
+};
+var startFunction = function () {
+    animationInterval = setInterval(drawingElements, frameRate);
+    window.addEventListener("blur", function () { clearInterval(animationInterval); });
+    window.addEventListener("focus", windowFocusEvent);
+};
+var restartButton = document.querySelector(".restart");
+if (restartButton) {
+    restartButton.addEventListener("click", function () {
+        newSnake();
+        getNewBait();
+        startFunction();
+    });
+}
+startFunction();
