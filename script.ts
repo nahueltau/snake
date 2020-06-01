@@ -50,7 +50,7 @@ const newSnake = ()=>{
 }
 newSnake();
 let hasAte: boolean = false;
-
+let keyPressed: boolean = false;
 //Movement
 let currentMovementDirection: string = "ArrowRight";
 const movement: (currentMovementDirection: string)=>void = ()=>{
@@ -115,19 +115,21 @@ const counter: HTMLElement | null = document.querySelector(".counter");
 
 //KEYBOARD EVENTS
 const handleInput: (event: KeyboardEvent)=>void = (event)=>{
-    
+    if(!keyPressed){
     if(event.key==="ArrowUp"&&currentMovementDirection!=="ArrowDown"
     ||event.key==="ArrowDown"&&currentMovementDirection!=="ArrowUp"
     ||event.key==="ArrowLeft"&&currentMovementDirection!=="ArrowRight"
     ||event.key==="ArrowRight"&&currentMovementDirection!=="ArrowLeft"){
     currentMovementDirection = event.key;
-    }
+    keyPressed = true;
+    }}
 }
 window.addEventListener("keydown",handleInput);
 
 //ANIMATION SETUP
 const drawingElements: ()=>void = ()=>{
-    
+    //Release keys
+    keyPressed = false;
     //Background draw
     
     ctx.fillStyle = darkStyle;
@@ -166,6 +168,7 @@ const windowFocusEvent = ()=>{
     animationInterval = setInterval(drawingElements,frameRate);
 };
 const startFunction = ()=>{
+    clearInterval(animationInterval);
     animationInterval = setInterval(drawingElements,frameRate);
     window.addEventListener("blur",()=>{clearInterval(animationInterval);});
     window.addEventListener("focus",windowFocusEvent);

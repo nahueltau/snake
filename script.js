@@ -50,6 +50,7 @@ var newSnake = function () {
 };
 newSnake();
 var hasAte = false;
+var keyPressed = false;
 //Movement
 var currentMovementDirection = "ArrowRight";
 var movement = function () {
@@ -113,16 +114,21 @@ getNewBait();
 var counter = document.querySelector(".counter");
 //KEYBOARD EVENTS
 var handleInput = function (event) {
-    if (event.key === "ArrowUp" && currentMovementDirection !== "ArrowDown"
-        || event.key === "ArrowDown" && currentMovementDirection !== "ArrowUp"
-        || event.key === "ArrowLeft" && currentMovementDirection !== "ArrowRight"
-        || event.key === "ArrowRight" && currentMovementDirection !== "ArrowLeft") {
-        currentMovementDirection = event.key;
+    if (!keyPressed) {
+        if (event.key === "ArrowUp" && currentMovementDirection !== "ArrowDown"
+            || event.key === "ArrowDown" && currentMovementDirection !== "ArrowUp"
+            || event.key === "ArrowLeft" && currentMovementDirection !== "ArrowRight"
+            || event.key === "ArrowRight" && currentMovementDirection !== "ArrowLeft") {
+            currentMovementDirection = event.key;
+            keyPressed = true;
+        }
     }
 };
 window.addEventListener("keydown", handleInput);
 //ANIMATION SETUP
 var drawingElements = function () {
+    //Release keys
+    keyPressed = false;
     //Background draw
     ctx.fillStyle = darkStyle;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -154,6 +160,7 @@ var windowFocusEvent = function () {
     animationInterval = setInterval(drawingElements, frameRate);
 };
 var startFunction = function () {
+    clearInterval(animationInterval);
     animationInterval = setInterval(drawingElements, frameRate);
     window.addEventListener("blur", function () { clearInterval(animationInterval); });
     window.addEventListener("focus", windowFocusEvent);
