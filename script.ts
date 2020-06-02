@@ -1,14 +1,26 @@
 //CANVAS SETUP
     const canvasContainer: HTMLElement|null= document.getElementById("canvas-container");
+    const appContainer: HTMLElement|null= document.querySelector("container");
     const canvas: HTMLCanvasElement= document.createElement("canvas");
+    let canvasWidth: number = window.innerWidth;
+    let canvasHeight: number = window.innerWidth;
+    if(window.innerWidth>=640){
+        canvasWidth= 640;
+        canvasHeight= 480;
+    }
+    const canvasUnit: number = 20;
     if(canvasContainer){
         canvasContainer.appendChild(canvas);
     }
-    const canvasWidth: number = 640;
-    const canvasHeight: number = 480;
-    const canvasUnit: number = 20;
+    if(appContainer){
+        appContainer.style.width = `${canvasWidth}px`;
+    }
+   
     canvas.width=canvasWidth;
     canvas.height=canvasHeight;
+    
+    
+    
 //COLOR SETUP
     const lightStyle: string = "#DDD";
     const darkStyle: string = "#333";
@@ -48,8 +60,6 @@ const newSnake = ()=>{
     startPosY= Math.floor(Math.random()*canvasHeight/canvasUnit/2+canvasHeight/canvasUnit/4);
     snakeSegments= [{x: startPosX+2, y: startPosY},{x: startPosX+1, y: startPosY},{x: startPosX, y: startPosY}];
     let sn = [...snakeSegments]
-    console.log(snakeSegments);
-    console.log(sn);
 }
 newSnake();
 let hasAte: boolean = false;
@@ -131,6 +141,7 @@ window.addEventListener("keydown",handleInput);
 
 //ANIMATION SETUP
 const drawingElements: ()=>void = ()=>{
+    
     //Release keys
     keyPressed = false;
     //Background draw
@@ -145,7 +156,7 @@ const drawingElements: ()=>void = ()=>{
      if(!hasAte){
         snakeSegments.pop();
     }
-    console.log(startPosX);
+    
     snakeSegments.unshift({x:startPosX,y:startPosY});
    
     hasAte=false;
