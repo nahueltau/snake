@@ -1,3 +1,10 @@
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 //CANVAS SETUP
 var canvasContainer = document.getElementById("canvas-container");
 var canvas = document.createElement("canvas");
@@ -47,6 +54,9 @@ var newSnake = function () {
     startPosX = Math.floor(Math.random() * canvasWidth / canvasUnit / 2 + canvasWidth / canvasUnit / 4);
     startPosY = Math.floor(Math.random() * canvasHeight / canvasUnit / 2 + canvasHeight / canvasUnit / 4);
     snakeSegments = [{ x: startPosX + 2, y: startPosY }, { x: startPosX + 1, y: startPosY }, { x: startPosX, y: startPosY }];
+    var sn = __spreadArrays(snakeSegments);
+    console.log(snakeSegments);
+    console.log(sn);
 };
 newSnake();
 var hasAte = false;
@@ -139,6 +149,7 @@ var drawingElements = function () {
     if (!hasAte) {
         snakeSegments.pop();
     }
+    console.log(startPosX);
     snakeSegments.unshift({ x: startPosX, y: startPosY });
     hasAte = false;
     //Snake draw

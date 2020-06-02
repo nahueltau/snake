@@ -47,6 +47,9 @@ const newSnake = ()=>{
     startPosX= Math.floor(Math.random()*canvasWidth/canvasUnit/2+canvasWidth/canvasUnit/4);
     startPosY= Math.floor(Math.random()*canvasHeight/canvasUnit/2+canvasHeight/canvasUnit/4);
     snakeSegments= [{x: startPosX+2, y: startPosY},{x: startPosX+1, y: startPosY},{x: startPosX, y: startPosY}];
+    let sn = [...snakeSegments]
+    console.log(snakeSegments);
+    console.log(sn);
 }
 newSnake();
 let hasAte: boolean = false;
@@ -115,7 +118,7 @@ const counter: HTMLElement | null = document.querySelector(".counter");
 
 //KEYBOARD EVENTS
 const handleInput: (event: KeyboardEvent)=>void = (event)=>{
-    if(!keyPressed){
+   if(!keyPressed){
     if(event.key==="ArrowUp"&&currentMovementDirection!=="ArrowDown"
     ||event.key==="ArrowDown"&&currentMovementDirection!=="ArrowUp"
     ||event.key==="ArrowLeft"&&currentMovementDirection!=="ArrowRight"
@@ -142,6 +145,7 @@ const drawingElements: ()=>void = ()=>{
      if(!hasAte){
         snakeSegments.pop();
     }
+    console.log(startPosX);
     snakeSegments.unshift({x:startPosX,y:startPosY});
    
     hasAte=false;
