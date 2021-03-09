@@ -4,9 +4,10 @@
     const canvas: HTMLCanvasElement= document.createElement("canvas");
     let canvasWidth: number = window.innerWidth;
     let canvasHeight: number = window.innerWidth;
-    if(window.innerWidth>=640){
-        canvasWidth= 640;
-        canvasHeight= 480;
+    let collision: boolean = false;
+    if(window.innerWidth>=800){
+        canvasWidth= 800;
+        canvasHeight= 700;
     }
     const canvasUnit: number = 20;
     if(canvasContainer){
@@ -37,6 +38,9 @@ const collisionCheck = ()=>{
     if(getCenter(snakeSegments[0].x)===getCenter(baitPos.x)&&getCenter(snakeSegments[0].y)===getCenter(baitPos.y)){
         getNewBait();
         hasAte = true;
+        if(frameRate>20){
+            frameRate-=3;
+        }
         if(counter){
             counter.innerHTML = ((snakeSegments.length-2)*10).toString()
         }
@@ -45,7 +49,8 @@ const collisionCheck = ()=>{
     for(let segment = 1; segment<snakeSegments.length;segment++){
         if(getCenter(snakeSegments[segment].y)===getCenter(snakeSegments[0].y)){
             if(getCenter(snakeSegments[segment].x)===getCenter(snakeSegments[0].x)){
-            clearInterval(animationInterval);
+            collision = true;
+           
             window.removeEventListener("focus",windowFocusEvent);
             }
         }
@@ -141,7 +146,7 @@ window.addEventListener("keydown",handleInput);
 
 //ANIMATION SETUP
 const drawingElements: ()=>void = ()=>{
-    
+ 
     //Release keys
     keyPressed = false;
     //Background draw
@@ -170,22 +175,24 @@ const drawingElements: ()=>void = ()=>{
     collisionCheck();
     let outOfBounds: boolean = getCenter(startPosX)<0 || getCenter(startPosX)>canvasWidth || getCenter(startPosY)<0 || getCenter(startPosY)>canvasHeight;
     isOutOfBounds(outOfBounds); 
-    
-    
-    
-   
+    if(!collision){
+        animationInterval = setTimeout(drawingElements,frameRate);
+    }
+
 }
 //START ANIMATION
 let frameRate: number= 100;
 let animationInterval: number;
 const windowFocusEvent = ()=>{
     clearInterval(animationInterval);
-    animationInterval = setInterval(drawingElements,frameRate);
+    animationInterval = setTimeout(drawingElements,frameRate);
 };
-const startFunction = ()=>{
+const startAnimation = ()=>{
     clearInterval(animationInterval);
-    animationInterval = setInterval(drawingElements,frameRate);
+    animationInterval = setTimeout(drawingElements,frameRate);
+    //stop game if window not on focus
     window.addEventListener("blur",()=>{clearInterval(animationInterval);});
+    //resume game when window bakc on focus
     window.addEventListener("focus",windowFocusEvent);
 }
 const restartButton: HTMLElement | null = document.querySelector(".restart");
@@ -193,8 +200,17 @@ if(restartButton){
     restartButton.addEventListener("click",()=>{
       newSnake();
       getNewBait();
-      startFunction();
+      //reset counter
+      if(counter){
+          counter.innerHTML = String(0);
+      }
+      //reset speed
+      frameRate = 100;
+      //reset collision boolean
+      collision = false;
+      startAnimation();
     });
 }
-startFunction();
+startAnimation();
+
 

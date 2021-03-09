@@ -1,9 +1,7 @@
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 //CANVAS SETUP
 var canvasContainer = document.getElementById("canvas-container");
@@ -11,9 +9,10 @@ var appContainer = document.querySelector("container");
 var canvas = document.createElement("canvas");
 var canvasWidth = window.innerWidth;
 var canvasHeight = window.innerWidth;
-if (window.innerWidth >= 640) {
-    canvasWidth = 640;
-    canvasHeight = 480;
+var collision = false;
+if (window.innerWidth >= 800) {
+    canvasWidth = 800;
+    canvasHeight = 700;
 }
 var canvasUnit = 20;
 if (canvasContainer) {
@@ -40,6 +39,9 @@ var collisionCheck = function () {
     if (getCenter(snakeSegments[0].x) === getCenter(baitPos.x) && getCenter(snakeSegments[0].y) === getCenter(baitPos.y)) {
         getNewBait();
         hasAte = true;
+        if (frameRate > 20) {
+            frameRate -= 3;
+        }
         if (counter) {
             counter.innerHTML = ((snakeSegments.length - 2) * 10).toString();
         }
@@ -48,7 +50,7 @@ var collisionCheck = function () {
     for (var segment = 1; segment < snakeSegments.length; segment++) {
         if (getCenter(snakeSegments[segment].y) === getCenter(snakeSegments[0].y)) {
             if (getCenter(snakeSegments[segment].x) === getCenter(snakeSegments[0].x)) {
-                clearInterval(animationInterval);
+                collision = true;
                 window.removeEventListener("focus", windowFocusEvent);
             }
         }
@@ -62,7 +64,7 @@ var newSnake = function () {
     startPosX = Math.floor(Math.random() * canvasWidth / canvasUnit / 2 + canvasWidth / canvasUnit / 4);
     startPosY = Math.floor(Math.random() * canvasHeight / canvasUnit / 2 + canvasHeight / canvasUnit / 4);
     snakeSegments = [{ x: startPosX + 2, y: startPosY }, { x: startPosX + 1, y: startPosY }, { x: startPosX, y: startPosY }];
-    var sn = __spreadArrays(snakeSegments);
+    var sn = __spreadArray([], snakeSegments);
 };
 newSnake();
 var hasAte = false;
@@ -167,18 +169,23 @@ var drawingElements = function () {
     collisionCheck();
     var outOfBounds = getCenter(startPosX) < 0 || getCenter(startPosX) > canvasWidth || getCenter(startPosY) < 0 || getCenter(startPosY) > canvasHeight;
     isOutOfBounds(outOfBounds);
+    if (!collision) {
+        animationInterval = setTimeout(drawingElements, frameRate);
+    }
 };
 //START ANIMATION
 var frameRate = 100;
 var animationInterval;
 var windowFocusEvent = function () {
     clearInterval(animationInterval);
-    animationInterval = setInterval(drawingElements, frameRate);
+    animationInterval = setTimeout(drawingElements, frameRate);
 };
-var startFunction = function () {
+var startAnimation = function () {
     clearInterval(animationInterval);
-    animationInterval = setInterval(drawingElements, frameRate);
+    animationInterval = setTimeout(drawingElements, frameRate);
+    //stop game if window not on focus
     window.addEventListener("blur", function () { clearInterval(animationInterval); });
+    //resume game when window bakc on focus
     window.addEventListener("focus", windowFocusEvent);
 };
 var restartButton = document.querySelector(".restart");
@@ -186,7 +193,15 @@ if (restartButton) {
     restartButton.addEventListener("click", function () {
         newSnake();
         getNewBait();
-        startFunction();
+        //reset counter
+        if (counter) {
+            counter.innerHTML = String(0);
+        }
+        //reset speed
+        frameRate = 100;
+        //reset collision boolean
+        collision = false;
+        startAnimation();
     });
 }
-startFunction();
+startAnimation();
