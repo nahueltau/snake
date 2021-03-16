@@ -1,43 +1,61 @@
-//CANVAS SETUP
-    const canvasContainer: HTMLElement|null= document.getElementById("canvas-container");
-    const appContainer: HTMLElement|null= document.querySelector("container");
-    const canvas: HTMLCanvasElement= document.createElement("canvas");
-    let canvasWidth: number = window.innerWidth;
-    let canvasHeight: number = window.innerWidth;
-    let collision: boolean = false;
-    if(window.innerWidth>=800){
-        canvasWidth= 800;
-        canvasHeight= 700;
+
+//DOM MANIPULATION
+const appContainer: HTMLElement|null= document.querySelector("container");
+const canvasContainer: HTMLElement|null= document.getElementById("canvas-container");
+const canvas: HTMLCanvasElement= document.createElement("canvas");
+canvasContainer?.appendChild(canvas);
+const restartButton: HTMLElement | null = document.querySelector(".restart");
+//COUNTER SETUP
+const counter: HTMLElement | null = document.querySelector(".counter");
+restartButton?.addEventListener("click",()=>{
+    snake = new Snake;
+    bait = new Bait(snake);
+    //reset counter
+    if(counter){
+        counter.innerHTML = String(0);
     }
-    const canvasUnit: number = 20;
-    if(canvasContainer){
-        canvasContainer.appendChild(canvas);
-    }
-    if(appContainer){
-        appContainer.style.width = `${canvasWidth}px`;
-    }
-   
-    canvas.width=canvasWidth;
-    canvas.height=canvasHeight;
-    
-    
-    
-//COLOR SETUP
-    const lightStyle: string = "#DDD";
-    const darkStyle: string = "#333";
-    const mainColorStyle: string = "red";
-//CONTEXT SETUP
-    const ctx: any = canvas.getContext("2d");
-    ctx.lineWidth = "0";
-//GENERAL SETUP
-const getCenter: (startPos:number) => number = (startPos)=>{
-    return canvasUnit*Math.floor(startPos)+canvasUnit/2;
+    //reset speed
+    frameRate = 100;
+    //reset collision boolean
+    collision = false;
+    startAnimation();
+    });
+//CANVAS STYLE
+let canvasWidth: number = window.innerWidth;
+let canvasHeight: number = window.innerWidth;
+const canvasUnit: number = 20;
+if(window.innerWidth>=800){
+    canvasWidth= 800;
+    canvasHeight= 700;
 }
-const collisionCheck = ()=>{
+if(appContainer){
+    appContainer.style.width = `${canvasWidth}px`;
+}
+canvas.width=canvasWidth;
+canvas.height=canvasHeight;
+//COLOR SETUP
+const lightStyle: string = "#DDD";
+const darkStyle: string = "#333";
+const mainColorStyle: string = "crimson";
+//CONTEXT SETUP
+const ctx: any = canvas.getContext("2d");
+ctx.lineWidth = "0";
+
+//GENERAL SETUP
+let frameRate: number= 100;
+let animationInterval: number;
+let collision: boolean = false;
+const getCenter: (particle:number) => number = (particle)=>{
+    return canvasUnit*Math.floor(particle)+canvasUnit/2;
+}
+const collisionCheck = (snake: Snake, bait: Bait)=>{
+    let snakeSegments = snake.segments;
+    let baitPos = bait.position;
+    let getNewBait = ()=> bait.new();
     //Snake with bait
     if(getCenter(snakeSegments[0].x)===getCenter(baitPos.x)&&getCenter(snakeSegments[0].y)===getCenter(baitPos.y)){
         getNewBait();
-        hasAte = true;
+        snake.hasAte = true;
         if(frameRate>20){
             frameRate-=3;
         }
@@ -56,67 +74,135 @@ const collisionCheck = ()=>{
         }
     }
 }
-//SNAKE SETUP
-let startPosX: number;
-let startPosY: number;
-let snakeSegments: {x:number,y:number}[];
-const newSnake = ()=>{
-    startPosX= Math.floor(Math.random()*canvasWidth/canvasUnit/2+canvasWidth/canvasUnit/4);
-    startPosY= Math.floor(Math.random()*canvasHeight/canvasUnit/2+canvasHeight/canvasUnit/4);
-    snakeSegments= [{x: startPosX+2, y: startPosY},{x: startPosX+1, y: startPosY},{x: startPosX, y: startPosY}];
-    let sn = [...snakeSegments]
+const nextFrame: (s:Snake,b:Bait)=>void = ()=>{
+    //RELEASE KEYS
+    snake.eventTriggered = false;
+
+    //Background PAINTING
+    ctx.fillStyle = darkStyle;
+    ctx.fillRect(0,0,canvasWidth, canvasHeight);
+    //Bait PAINTING
+        ctx.fillStyle = mainColorStyle;
+        ctx.fillRect(getCenter(bait.position.x)-canvasUnit/2,getCenter(bait.position.y)-canvasUnit/2,canvasUnit, canvasUnit);
+    //Snake MOVE
+        snake.move();
+    //Snake PAINTING
+    snake.segments.forEach(position => {
+        ctx.fillStyle = lightStyle;
+        ctx.fillRect(getCenter(position.x)-canvasUnit/2,getCenter(position.y)-canvasUnit/2,canvasUnit, canvasUnit);
+    });
+
+
+    //SNAKE METHODS
+    snake.updatePosition();
+    collisionCheck(snake,bait);
+    snake.checkOutOfBounds();
+
+    //REQUEST NEXT FRAME
+    if(!collision){
+        animationInterval = setTimeout(()=>nextFrame(snake,bait),frameRate);
+    }
+
 }
-newSnake();
-let hasAte: boolean = false;
-let keyPressed: boolean = false;
-//Movement
-let currentMovementDirection: string = "ArrowRight";
-const movement: (currentMovementDirection: string)=>void = ()=>{
-    switch(currentMovementDirection){
-        case "ArrowRight":
-            startPosX+=1;
-            break;
-        case "ArrowLeft":
-            startPosX-=1;
-            break;
-        case "ArrowDown":
-            startPosY+=1;
-            break;
-        case "ArrowUp":
-            startPosY-=1;
-            break;
+
+//CLASSES
+class Snake{
+    position: {x:number,y:number};
+    segments: [{x:number,y:number},{x:number,y:number},{x:number,y:number}];
+    movementDirection: string = "ArrowRight";
+    eventTriggered:boolean = false;
+    hasAte:boolean = false;
+    constructor(){
+        this.position = {
+            x: Math.floor(Math.random()*canvasWidth/canvasUnit/2+canvasWidth/canvasUnit/4),
+            y: Math.floor(Math.random()*canvasHeight/canvasUnit/2+canvasHeight/canvasUnit/4)
+        };
+       this.segments = [
+            {x: this.position.x+2, y: this.position.y},
+            {x: this.position.x+1, y: this.position.y},
+            {x: this.position.x, y: this.position.y}
+       ]
+    }
+    updatePosition: ()=>void = ()=>{
+        switch(this.movementDirection){
+            case "ArrowRight":
+                this.position.x+=1;
+                break;
+            case "ArrowLeft":
+                this.position.x-=1;
+                break;
+            case "ArrowDown":
+                this.position.y+=1;
+                break;
+            case "ArrowUp":
+                this.position.y-=1;
+                break;
+            default:
+                this.position.x-=0;
+                this.position.y-=0;
+                break;
+        }
+    }
+    checkOutOfBounds = ()=>{
+        let outOfBounds: boolean = getCenter(this.position.x)<0 || getCenter(this.position.x)>canvasWidth || getCenter(this.position.y)<0 || getCenter(this.position.y)>canvasHeight;
+        if(outOfBounds){
+            if(getCenter(this.position.x)<0){
+                this.position.x = canvasWidth/canvasUnit;
+            }
+            else if(getCenter(this.position.x)>canvasWidth){
+                this.position.x = 0;
+            }
+            if(getCenter(this.position.y)<0){
+                this.position.y = canvasHeight/canvasUnit;
+            }
+            else if(getCenter(this.position.y)>canvasHeight){
+                this.position.y = 0;
+            }
+        }
+    }
+    listenForInput: (event: KeyboardEvent)=>void = (event)=>{
+        if(!this.eventTriggered){
+         if(event.key==="ArrowUp"&&this.movementDirection!=="ArrowDown"
+         ||event.key==="ArrowDown"&&this.movementDirection!=="ArrowUp"
+         ||event.key==="ArrowLeft"&&this.movementDirection!=="ArrowRight"
+         ||event.key==="ArrowRight"&&this.movementDirection!=="ArrowLeft"){
+         this.movementDirection = event.key;
+         this.eventTriggered = true;
+         }}
+     }
+     move: ()=> void = ()=>{
+     if(!this.hasAte){
+        this.segments.pop();
+    }
+    
+    this.segments.unshift({x:this.position.x,y:this.position.y});
+   
+    this.hasAte=false;
     }
 }
-const isOutOfBounds = (outOfBounds:boolean)=>{
-    if(outOfBounds){
-        if(getCenter(startPosX)<0){
-            startPosX = canvasWidth/canvasUnit;
-        }
-        else if(getCenter(startPosX)>canvasWidth){
-            startPosX = 0;
-        }
-        if(getCenter(startPosY)<0){
-            startPosY = canvasHeight/canvasUnit;
-        }
-        else if(getCenter(startPosY)>canvasHeight){
-            startPosY = 0;
-        }
-    }
-}
-//BAIT SETUP
-    const newBait: ()=>{x:number,y:number} = ()=>{
-        return {
+class Bait{
+    position: {x:number,y:number};
+    snakeSegments:any;
+    constructor(snake:Snake){
+        this.position = {
             x:Math.floor(Math.random()*canvasWidth/canvasUnit),
             y:Math.floor(Math.random()*canvasHeight/canvasUnit)
         }
+        this.snakeSegments = snake.segments;
     }
-    const getNewBait: ()=> void = ()=>{
-        baitPos = newBait();
+    new: ()=> void = ()=>{
+        this.position = {
+            x:Math.floor(Math.random()*canvasWidth/canvasUnit),
+            y:Math.floor(Math.random()*canvasHeight/canvasUnit)
+        }
         let isBaitSuperposed: boolean=true;
         while(isBaitSuperposed){
-            for(let segment=0;segment<snakeSegments.length;segment++){
-                if(getCenter(snakeSegments[segment].x)===getCenter(baitPos.x)&&getCenter(snakeSegments[segment].y)===getCenter(baitPos.y)){
-                    baitPos = newBait();
+            for(let segment=0;segment<this.snakeSegments.length;segment++){
+                if(getCenter(this.snakeSegments[segment].x)===getCenter(this.position.x)&&getCenter(this.snakeSegments[segment].y)===getCenter(this.position.y)){
+                    this.position = {
+                        x:Math.floor(Math.random()*canvasWidth/canvasUnit),
+                        y:Math.floor(Math.random()*canvasHeight/canvasUnit)
+                    }
                     isBaitSuperposed=true;
                     break;
                 }else{
@@ -125,92 +211,28 @@ const isOutOfBounds = (outOfBounds:boolean)=>{
             }
         } 
     }
-    let baitPos: {x:number,y:number};
-    getNewBait();
-
-//COUNTER SETUP
-const counter: HTMLElement | null = document.querySelector(".counter");
-
-//KEYBOARD EVENTS
-const handleInput: (event: KeyboardEvent)=>void = (event)=>{
-   if(!keyPressed){
-    if(event.key==="ArrowUp"&&currentMovementDirection!=="ArrowDown"
-    ||event.key==="ArrowDown"&&currentMovementDirection!=="ArrowUp"
-    ||event.key==="ArrowLeft"&&currentMovementDirection!=="ArrowRight"
-    ||event.key==="ArrowRight"&&currentMovementDirection!=="ArrowLeft"){
-    currentMovementDirection = event.key;
-    keyPressed = true;
-    }}
-}
-window.addEventListener("keydown",handleInput);
-
-//ANIMATION SETUP
-const drawingElements: ()=>void = ()=>{
- 
-    //Release keys
-    keyPressed = false;
-    //Background draw
     
-    ctx.fillStyle = darkStyle;
-    ctx.fillRect(0,0,canvasWidth, canvasHeight);
-  
-    //Bait
-        ctx.fillStyle = mainColorStyle;
-        ctx.fillRect(getCenter(baitPos.x)-canvasUnit/2,getCenter(baitPos.y)-canvasUnit/2,canvasUnit, canvasUnit);
-    //Snake length
-     if(!hasAte){
-        snakeSegments.pop();
-    }
-    
-    snakeSegments.unshift({x:startPosX,y:startPosY});
-   
-    hasAte=false;
-    //Snake draw
-    snakeSegments.forEach(position => {
-        ctx.fillStyle = lightStyle;
-        ctx.fillRect(getCenter(position.x)-canvasUnit/2,getCenter(position.y)-canvasUnit/2,canvasUnit, canvasUnit);
-    });
-    //Snake movement and out of bounds check
-    movement(currentMovementDirection);
-    collisionCheck();
-    let outOfBounds: boolean = getCenter(startPosX)<0 || getCenter(startPosX)>canvasWidth || getCenter(startPosY)<0 || getCenter(startPosY)>canvasHeight;
-    isOutOfBounds(outOfBounds); 
-    if(!collision){
-        animationInterval = setTimeout(drawingElements,frameRate);
-    }
-
 }
-//START ANIMATION
-let frameRate: number= 100;
-let animationInterval: number;
+
+//INIT OBJECTS
+let snake = new Snake;
+let bait = new Bait(snake);
+
+//EVENT SETUP
 const windowFocusEvent = ()=>{
     clearInterval(animationInterval);
-    animationInterval = setTimeout(drawingElements,frameRate);
+    animationInterval = setTimeout(()=>nextFrame(snake,bait),frameRate);
 };
 const startAnimation = ()=>{
     clearInterval(animationInterval);
-    animationInterval = setTimeout(drawingElements,frameRate);
+    animationInterval = setTimeout(()=>nextFrame(snake,bait),frameRate);
     //stop game if window not on focus
     window.addEventListener("blur",()=>{clearInterval(animationInterval);});
     //resume game when window bakc on focus
     window.addEventListener("focus",windowFocusEvent);
+    window.addEventListener("keydown",snake.listenForInput);
 }
-const restartButton: HTMLElement | null = document.querySelector(".restart");
-if(restartButton){
-    restartButton.addEventListener("click",()=>{
-      newSnake();
-      getNewBait();
-      //reset counter
-      if(counter){
-          counter.innerHTML = String(0);
-      }
-      //reset speed
-      frameRate = 100;
-      //reset collision boolean
-      collision = false;
-      startAnimation();
-    });
-}
+//START GAME
 startAnimation();
 
 
