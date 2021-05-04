@@ -1,25 +1,32 @@
-const canvasPoint = (width:number, height:number, unit:number)=>{
+const canvasPoint = (canvas:[number,number])=>{
     let getPoint:()=>[number, number] = ()=>{
-        let x = Math.floor(Math.random()*width/unit);
-        let y = Math.floor(Math.random()*height/unit);
+        let x = Math.floor(Math.random()*canvas[0]);
+        let y = Math.floor(Math.random()*canvas[1]);
         return [x,y]
     }
     return getPoint 
 }
+const getPoint = (canvas:[number,number])=>{
+        let x = Math.floor(Math.random()*canvas[0]);
+        let y = Math.floor(Math.random()*canvas[1]);
+        return [x,y]
+}
 const checkIfPointInArray = (point: number[],array:any[])=>{
     for(let i=0; i< array.length;i++){
-        if(array[0] === point[0] && array[1] ===point[1]){
+        if(array[i][0] === point[0] && array[i][1] === point[1]){
             return true;
-        }else{
-            return false;
         }
     }
+    return false;
 }
 const getCenterFrom:(unit:number)=>any = (unit)=>{
     const getCenter: (particle:number) => number = (particle)=>{
         return unit*Math.floor(particle)+unit/2;
     }
     return getCenter
+}
+const getAbsPos = (coor:number ,ctxUnit:number)=>{
+        return ctxUnit*Math.floor(coor)+ctxUnit/2;
 }
 const getVectorDirection = (key:string)=>{
     let vector:[number,number] = [0,0];
@@ -44,4 +51,12 @@ const updateCounter = (snake:any, counter:HTMLElement|null)=>{
             counter.innerHTML = ((snake.length-2)*10).toString()
     }
 }
-export {canvasPoint, checkIfPointInArray, getCenterFrom,getVectorDirection, updateCounter}
+const processInput = (event:any, currDirection:[number,number])=>{
+    let direction = currDirection;
+    let newDirection:[number,number] = getVectorDirection(event.key);
+    if(newDirection[0]*-1 ===direction[0]&&newDirection[1]*-1 ===direction[1]){
+        return direction
+    }
+    return newDirection
+}
+export {canvasPoint, checkIfPointInArray, getCenterFrom,getVectorDirection, updateCounter,processInput, getAbsPos, getPoint}

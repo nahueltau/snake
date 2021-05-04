@@ -1,6 +1,6 @@
 import {checkIfPointInArray} from "./logic"
 const moveSnake = (snake: any, direction:[number,number]) =>{
-    let newSnake = growSnake(snake,direction);
+    let newSnake:any[] = growSnake(snake,direction);
     newSnake.pop();  
     return newSnake;  
 } 
@@ -21,17 +21,36 @@ const newSnake = (point:[number,number])=>{
 const newBait = (snake:any, newPoint:Function)=>{
     let bait = newPoint()
     if(checkIfPointInArray(bait,snake)){
-        bait=newBait(snake,newPoint);
+        bait=newBait(snake,newPoint);  
     }
     return bait
 }
-const eatBait = (snake: any, currBait: number[], bait:[number, number], direction:[number,number])=>{
+const hasAte = (snake: any, currBait: number[])=>{
     //Snake with bait
-    if(!checkIfPointInArray(currBait,snake[0])){
-        return snake; 
+    if(!checkIfPointInArray(currBait,snake)){
+        return false; 
     }
-    let newSnake = growSnake(snake,direction);
-    return newSnake;
+
+    return true;
 }
-export {moveSnake, growSnake, newSnake, newBait, eatBait}
+const checkOutOfBounds = (currsnake:any, canvasUnitSize:[number, number])=>{
+    let snake = [...currsnake];
+    let outOfBounds: boolean = snake[0][0]<0 || snake[0][0]>=canvasUnitSize[0] || snake[0][1]<0 || snake[0][1]>=canvasUnitSize[1];
+    if(outOfBounds){
+        if(snake[0][0]<0){
+            snake[0][0] = canvasUnitSize[0];
+        }
+        else if(snake[0][0] >= canvasUnitSize[0]){
+            snake[0][0] = 0;
+        }
+        if(snake[0][1]<0){
+            snake[0][1] = canvasUnitSize[1];
+        }
+        else if(snake[0][1] >= canvasUnitSize[1]){
+            snake[0][1] = 0;
+        }
+    }
+    return snake;
+}
+export {moveSnake, growSnake, newSnake, newBait, hasAte,checkOutOfBounds}
  
