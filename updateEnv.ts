@@ -1,19 +1,30 @@
-import {moveSnake, hasAte, newBait, growSnake, checkOutOfBounds} from "./snakeFunctions"
-import {checkIfPointInArray, canvasPoint} from "./logic"
+import { moveSnake, hasAte, newBait, growSnake, newSnake, checkOutOfBounds } from "./snakeFunctions"
+import { checkIfPointInArray, canvasPoint } from "./logic"
 
 const updateEnv:
-(s:any[],d:[number,number], b:[number, number], c:[number,number])
-=>[any[],[number,number], boolean] = (s,direction, b, canvasUnitDimensions)=>{
-    const newPoint = canvasPoint(canvasUnitDimensions)
-    let snake:any[] = moveSnake(s,direction)
-    let bait:[number, number] = b;
-    let collision:boolean = checkIfPointInArray(snake[0], snake.slice(1));
+    (snake: any[], direction: [number, number], bait: [number, number], canvasUnitDimensions: [number, number])
+        => [any[], [number, number], boolean] = (s, direction, b, canvasUnitDimensions) => {
 
-    if(hasAte(snake,bait)){
-        snake = growSnake(snake,direction)
-        bait = newBait(snake,newPoint);
-    }
-    snake = checkOutOfBounds(snake, canvasUnitDimensions);
-    return [snake, bait, collision]
+            let snake: any[] = moveSnake(s, direction)
+            let bait: [number, number] = b;
+            let collision: boolean = checkIfPointInArray(snake[0], snake.slice(1));
+
+            if (hasAte(snake, bait)) {
+                const newPoint = canvasPoint(canvasUnitDimensions)
+                snake = growSnake(snake, direction)
+                bait = newBait(snake, newPoint);
+            }
+            snake = checkOutOfBounds(snake, canvasUnitDimensions);
+            return [snake, bait, collision]
+        }
+
+const setup = (canvasUnitDimensions: [number, number]) => {
+    const newPoint = canvasPoint(canvasUnitDimensions)
+    let snake = newSnake(newPoint());
+    let bait = newBait(snake, newPoint);
+    let collision = false;
+    let reset = false;
+    let direction: [number, number] = [1, 0];
+    return [snake, bait, collision, reset, direction]
 }
-export {updateEnv}
+export { updateEnv, setup }
