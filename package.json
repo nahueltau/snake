@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no testO specified\" && exit 1",
+    "build":"parcel index.html",
+    "test": "echo \"Error: no testO specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
